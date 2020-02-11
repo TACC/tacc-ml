@@ -1,0 +1,128 @@
+ARG FROM_TAG
+FROM tacc/tacc-ml:$FROM_TAG
+
+########################################
+# BUILD Args
+########################################
+
+ARG VER
+ARG REL
+
+########################################
+# Configure ENV
+########################################
+
+RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
+
+########################################
+# Install Dependencies
+########################################
+
+RUN which apt-get &> /dev/null && apt-get install -y openjdk-8-jdk-headless \
+    ; which yum &> /dev/null && { yum -y install java-1.8.0-openjdk-devel; echo "JAVA_HOME=/usr/lib/jvm/java" > /etc/profile.d/java.sh; chmod a+r /etc/profile.d/java.sh; } \
+    ; docker-clean
+
+RUN conda install --yes --no-update-deps \
+	python=3.6 \
+        pillow \
+        h5py \
+        ipykernel \
+        jupyter \
+        matplotlib \
+        mock \
+        numpy \
+        scipy \
+        scikit-learn \
+        pandas \
+        cython \
+    && python -m ipykernel.kernelspec \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+########################################
+# Install TF
+########################################
+
+# Running bazel inside a `docker build` command causes trouble, cf:
+#   https://github.com/bazelbuild/bazel/issues/134
+# The easiest solution is to set up a bazelrc file forcing --batch.
+RUN echo "startup --batch" > /etc/bazel.bazelrc
+# Similarly, we need to workaround sandboxing issues:
+#   https://github.com/bazelbuild/bazel/issues/418
+RUN echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/bazel.bazelrc
+
+# Confgure versions and ENV
+ARG BAZEL_V=0.11.1
+ARG BAZEL_DIR=/opt/bazel
+ARG BAZEL_BIN=bazel-${BAZEL_V}-installer-linux-x86_64.sh
+ARG BAZEL_DIST=bazel-${BAZEL_V}-dist.zip
+ARG TF_V=1.8.0
+ARG TF_D=tensorflow-${TF_V}
+# Configure the build for our CUDA configuration.
+ENV CI_BUILD_PYTHON=python \
+    TF_NEED_CUDA=1 \
+    BAZEL_VERSION=${BAZEL_V} \
+    BAZEL_DIR=${BAZEL_DIR}
+RUN env | grep TF
+
+#RUN [ -e $BAZEL_DIR ] || mkdir -p $BAZEL_DIR \
+#	&& curl -s http://host.docker.internal:3333/bazel-license.txt > ${BAZEL_DIR}/LICENSE.txt
+
+# Install TF
+RUN cd /root && curl -s http://host.docker.internal:3333/${BAZEL_DIST} > ${BAZEL_DIR} \
+    && unzip -q ${BAZEL_DIR} -d bazel \
+    && cd bazel \
+    && export EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" \
+    && bash ./compile.sh \
+    && mv output/bazel /usr/local/bin \
+    && cd /root && rm -rf bazel
+
+ENV CUDA_HOME=/usr/local/cuda
+
+RUN curl -s http://host.docker.internal:3333/nccl-2.5.7-1.tar.gz | tar -xzf - \
+    && cd nccl-2.5.7-1 \
+    && make -j 4 install \
+    && cd ../ && rm -rf nccl-2.5.7-1 && docker-clean
+
+RUN cd /root \
+    && export TF_CUDA_VERSION=${CUDA_VERSION%.*} TF_CUDNN_VERSION=${CUDNN_VERSION%.*.*} \
+    && export PYTHON_BIN_PATH=$(which python) \
+    && export PYTHON_LIB_PATH="$($PYTHON_BIN_PATH -c 'import site; print(site.getsitepackages()[0])')" \
+    && export PYTHONPATH=${TF_ROOT}/lib PYTHON_ARG=${TF_ROOT}/lib \
+    && export CUDA_TOOLKIT_PATH=/usr/local/cuda CUDNN_INSTALL_PATH=/usr/local/cuda \
+    && export TF_NEED_GCP=0 \
+    && export TF_NEED_CUDA=1 \
+    && export TF_NEED_HDFS=0 \
+    && export TF_NEED_OPENCL=0 \
+    && export TF_NEED_JEMALLOC=1 \
+    && export TF_ENABLE_XLA=1 \
+    && export TF_NEED_VERBS=0 \
+    && export TF_CUDA_CLANG=0 \
+    && export TF_NEED_MKL=0 \
+    && export TF_DOWNLOAD_MKL=0 \
+    && export TF_NEED_AWS=0 \
+    && export TF_NEED_MPI=0 \
+    && export TF_NEED_GDR=0 \
+    && export TF_NEED_S3=0 \
+    && export TF_NEED_OPENCL_SYCL=0 \
+    && export TF_SET_ANDROID_WORKSPACE=0 \
+    && export TF_NEED_COMPUTECPP=0 \
+    && export GCC_HOST_COMPILER_PATH=$(which gcc) \
+    && export TF_NEED_KAFKA=0 \
+    && export TF_NEED_TENSORRT=0 \
+    && export TF_NCCL_VERSION=2.5 \
+    && export NCCL_INSTALL_PATH=/usr/local \
+    && curl -s http://host.docker.internal:3333/${TF_D}.tar.gz | tar -xzf - && cd ${TF_D} \
+    && sed -i 's/^#if TF_HAS_.*$/#if !defined(__NVCC__)/g' tensorflow/core/platform/macros.h \
+    && DIR=/usr/local/cuda/lib64/stubs \
+    && { [ -e $DIR/libcuda.so.1 ] || ln -s $DIR/libcuda.so $DIR/libcuda.so.1; }; ls $DIR/libcuda* \
+    && export LD_LIBRARY_PATH="$DIR/:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64:${LD_LIBRARY_PATH}" \
+    && ./configure \
+    && bazel build -c opt --copt=-mavx --config=cuda \
+	--discard_analysis_cache --notrack_incremental_state \
+	--cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
+        --local_resources 6144,4.0,2.0 \
+        tensorflow/tools/pip_package:build_pip_package \
+    && bazel-bin/tensorflow/tools/pip_package/build_pip_package /root \
+    && pip --no-cache-dir install /root/tensorflow-*.whl \
+    && rm -rf ${BAZEL_DIR} /root/tensorflow* /root/.cache \
+    && docker-clean

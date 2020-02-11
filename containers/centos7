@@ -1,0 +1,58 @@
+ARG FROM_TAG
+ARG FROM_IMG
+FROM ${FROM_IMG}:${FROM_TAG}
+
+########################################
+# BUILD Args
+########################################
+
+ARG FROM_IMG
+ARG FLAGS
+ARG VER
+ARG REL
+
+########################################
+# Configure ENV
+########################################
+
+SHELL ["/bin/bash", "-c"]
+ENV CFLAGS=${FLAGS}
+ENV CXXFLAGS=${FLAGS}
+RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
+
+########################################
+# Add docker-clean
+########################################
+
+ADD extras/docker-clean /usr/bin/docker-clean
+RUN chmod a+rx /usr/bin/docker-clean && docker-clean
+
+########################################
+# Necessary packages
+########################################
+
+RUN yum clean all && rm -rf /var/cache/yum/* && yum repolist \
+	&& yum -y groupinstall "Development tools"\
+	&& yum -y install curl which \
+	&& docker-clean
+
+########################################
+# Install conda
+########################################
+
+ENV MINICONDA_VERSION=4.7.12.1 \
+    CONDA_DIR=/opt/conda
+ENV PATH=${CONDA_DIR}/bin:${PATH}
+# Download and install miniconda
+RUN mkdir $CONDA_DIR && chmod -R a+rX $CONDA_DIR \
+    && ARCH=$(if [[ $FROM_IMG == *"ppc"* ]]; then echo ppc64le; else echo x86_64; fi) \
+    && MCFILE=Miniconda3-${MINICONDA_VERSION}-Linux-${ARCH}.sh \
+    && curl -s http://host.docker.internal:3333/${MCFILE} > $MCFILE \
+    && bash ${MCFILE} -f -b -p $CONDA_DIR && rm $MCFILE \
+    && conda config --system --set auto_update_conda false \
+    && conda config --system --set show_channel_urls true \
+    && conda update --all --quiet --yes \
+    && docker-clean \
+    && rm -rf ${CONDA_DIR}/pkgs/*
+# Activate conda on login
+RUN ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh

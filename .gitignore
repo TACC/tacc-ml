@@ -1,0 +1,7 @@
+*.log
+*.swp
+*cudnn*
+*cuda*
+serve
+server_pid
+base-images
