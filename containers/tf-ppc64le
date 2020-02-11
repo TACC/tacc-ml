@@ -1,0 +1,52 @@
+ARG FROM_TAG
+FROM tacc/tacc-ml:$FROM_TAG
+
+########################################
+# BUILD Args
+########################################
+
+ARG VER
+ARG REL
+
+########################################
+# Configure ENV
+########################################
+
+RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
+
+########################################
+# Install TF dependencies
+########################################
+
+RUN conda install --yes --no-update-deps \
+        pillow \
+	'protobuf>=3.8.0' \
+        h5py \
+        ipykernel \
+        jupyter \
+        matplotlib \
+        mock \
+        'numpy<2' \
+        scipy \
+        scikit-learn \
+        pandas \
+        cython \
+	'oauthlib>=3.0.0' \
+	'markdown>=2.6.8' \
+    && python -m ipykernel.kernelspec \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+########################################
+# Install TF
+########################################
+
+ARG TF_V
+RUN pip install tensorflow-gpu==$TF_V \
+    && docker-clean
+
+########################################
+# Install pytorch
+########################################
+
+RUN pip install torch torchvision \
+    && docker-clean

@@ -53,28 +53,6 @@ serve/Miniconda3-4.7.12.1-Linux-x86_64.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh > $@.tmp && mv $@.tmp $@
 serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
-serve/bazel-0.25.2-installer-linux-x86_64.sh: | serve curl
-	curl -sL https://github.com/bazelbuild/bazel/releases/download/0.25.2/bazel-0.25.2-installer-linux-x86_64.sh > $@.tmp && mv $@.tmp $@
-serve/bazel-0.11.1-installer-linux-x86_64.sh: | serve curl
-	curl -sL https://github.com/bazelbuild/bazel/releases/download/0.11.1/bazel-0.11.1-installer-linux-x86_64.sh > $@.tmp && mv $@.tmp $@
-serve/bazel-0.25.2-dist.zip: | serve curl
-	curl -sL https://github.com/bazelbuild/bazel/releases/download/0.25.2/bazel-0.25.2-dist.zip > $@.tmp && mv $@.tmp $@
-serve/bazel-0.11.1-dist.zip: | serve curl
-	curl -sL https://github.com/bazelbuild/bazel/releases/download/0.11.1/bazel-0.11.1-dist.zip > $@.tmp && mv $@.tmp $@
-serve/bazel-license.txt: | serve curl
-	curl -sL https://raw.githubusercontent.com/bazelbuild/bazel/master/LICENSE > $@.tmp && mv $@.tmp $@
-serve/tensorflow-1.8.0.tar.gz: | serve git
-	curl -sL https://github.com/tensorflow/tensorflow/archive/v1.8.0.tar.gz > $@.tmp && mv $@.tmp $@
-serve/tensorflow-1.15.2.tar.gz: | serve git
-	curl -sL https://github.com/tensorflow/tensorflow/archive/v1.15.2.tar.gz > $@.tmp && mv $@.tmp $@
-serve/tensorflow-2.1.0.tar.gz: | serve git
-	curl -sL https://github.com/tensorflow/tensorflow/archive/v2.1.0.tar.gz > $@.tmp && mv $@.tmp $@
-serve/osu-micro-benchmarks-5.4.4.tar.gz: | serve git
-	curl -s http://mvapich.cse.ohio-state.edu/download/mvapich/$(notdir $@) > $@.tmp && mv $@.tmp $@
-serve/mvapich2-2.3.1.tar.gz: | serve git
-	curl -s http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/$(notdir $@) > $@.tmp && mv $@.tmp $@
-serve/nccl-2.5.7-1.tar.gz: | serve curl
-	curl -sL https://github.com/NVIDIA/nccl/archive/v2.5.7-1.tar.gz > $@.tmp && mv $@.tmp $@
 serve/qemu: | serve ar curl
 	# Not necessary on docker desktop
 	rm -rf serve/tmp*
@@ -108,7 +86,7 @@ stop_server: server_pid
 ####################################
 # BUILD Commands
 ####################################
-BUILD = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 2,$^)
+BUILD = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 1,$^)
 PUSH = docker push $(ORG)/$@:$(VER)
 ####################################
 # CFLAGS
@@ -119,29 +97,14 @@ PPC := -mcpu=power9 -O2 -pipe
 ####################################
 # Base Images
 ####################################
-BASE := $(shell echo {ubuntu18.04,centos7}-cuda{9.2,10.1}-x86_64 {ubuntu18.04,centos7}-cuda10.1-ppc64le)
+BASE := $(shell echo {,ppc64le-}{centos7,ubuntu16.04})
 BASE_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'echo $$CFLAGS | grep "pipe" && ls /etc/$@-release'
 
-10.1-cudnn7-devel-centos7 10.1-cudnn7-devel-ubuntu18.04 9.2-cudnn7-devel-centos7 9.2-cudnn7-devel-ubuntu18.04: | docker
-	docker pull nvidia/cuda:$@
+%: containers/% serve/Miniconda3-4.7.12.1-Linux-x86_64.sh server_pid | docker
+	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg IMGP="" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
 	touch $@
-ppc64le-10.1-cudnn7-devel-centos7 ppc64le-10.1-cudnn7-devel-ubuntu18.04: | docker
-	docker pull nvidia/cuda-ppc64le:$(subst ppc64le-,,$@)
-	touch $@
-%-cuda9.2-x86_64: 9.2-cudnn7-devel-% containers/% server_pid
-	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg FROM_TAG="$<" --build-arg FROM_IMG="nvidia/cuda" ./containers &> $@.log
-	$(BASE_TEST) >> $@.log 2>&1
-	#$(PUSH) >> $@.log 2>&1
-	touch $@
-%-cuda10.1-x86_64: 10.1-cudnn7-devel-% containers/% server_pid
-	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg FROM_TAG="$<" --build-arg FROM_IMG="nvidia/cuda" ./containers &> $@.log
-	$(BASE_TEST) >> $@.log 2>&1
-	#$(PUSH) >> $@.log 2>&1
-	touch $@
-%-cuda10.1-ppc64le: 10.1-cudnn7-devel-% containers/% server_pid
-	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg FROM_TAG="$<" --build-arg FROM_IMG="nvidia/cuda-ppc64le" ./containers &> $@.log
-	$(BASE_TEST) >> $@.log 2>&1
-	#$(PUSH) >> $@.log 2>&1
+ppc64le-%: containers/% serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh server_pid | docker
+	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg IMGP="ppc64le/" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
 	touch $@
 base-images: $(BASE)
 	touch $@
@@ -149,62 +112,28 @@ base-images: $(BASE)
 
 .PHONY:clean-base
 clean-base: | docker
-	for img in $(BASE); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img; done
+	for img in $(BASE); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img $$img.log; done
 
 ####################################
 # ML Images
 ####################################
 #BUILD_ML = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 2,$^)
-ML := $(shell echo {ubuntu18.04,centos7}-cuda{9.2,10.1}-x86_64-tf{1.8.0,1.15.2,2.1.0} {ubuntu18.04,centos7}-cuda10.1-ppc64le-tf{1.8.0,1.15.2,2.1.0})
-ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'echo $$CFLAGS | grep "pipe" && ls /etc/$@-release'
+ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3)
+ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 
-%-tf1.8.0: % containers/tf-1.8-source server_pid
-	$(BUILD) --build-arg FROM_TAG="$<" --build-arg TF_V="1.8.0" ./containers 
-	$(ML_TEST)
+%-cuda9-tf1.14-pt1.3: containers/tf-conda %
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.14" --build-arg CV="9" --build-arg PT="1.3" ./containers 
+%-cuda10-tf1.15-pt1.3: containers/tf-conda %
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.3" ./containers 
+%-cuda10-tf2.0-pt1.3: containers/tf-conda %
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.0" --build-arg CV="10" --build-arg PT="1.3" ./containers 
+
+ml-images: $(ML)
 	touch $@
-ml-images: $(BASE)
-	touch $@
-	$(MAKE) stop_server
 
 .PHONY:clean-base
 clean-ml: | docker
 	for img in $(ML); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img; done
-####################################
-# Base Images
-####################################
-ubuntu16-cuda10.1-tf2.1.0:
-
-####################################
-# MPI Images
-####################################
-MPI := $(shell echo tacc-{ubuntu18,centos7}-mvapich2.3-{ib,psm2})
-MPI_TEST = docker run --rm -it $(ORG)/$@:$(VER) bash -c 'which mpicc && ls /etc/$@-release'
-# IB
-%-mvapich2.3-ib: containers/%-mvapich2.3-ib | docker %
-	$(BUILD) --build-arg FLAGS="$(TACC)" ./containers
-	$(MPI_TEST)
-	$(TAG)
-	$(PUSH)
-# PSM2
-%-mvapich2.3-psm2: containers/%-mvapich2.3-psm2 | docker %
-	$(BUILD) --build-arg FLAGS="$(TACC)" ./containers
-	$(MPI_TEST)
-	$(TAG)
-	$(PUSH)
-#docker tag $(ORG)/$@:$(VER) $(ORG)/$@:stampede2
-#docker push $(ORG)/$@:stampede2
-#	for sys in hikari maverick2 wrangler; do \
-#		docker tag $(ORG)/$@:$(VER) $(ORG)/$@:$$sys \
-#		&& docker push $(ORG)/$@:$$sys; \
-#	done
-mpi-images: $(MPI)
-
-clean-mpi: | docker
-	docker rmi $(ORG)/tacc-{ubuntu18,centos7}-mvapich2.3-{ib,psm2}:{$(VER),latest}
-####################################
-# CUDA Images
-####################################
-
 
 ####################################
 # Application Images

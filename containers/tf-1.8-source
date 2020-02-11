@@ -80,8 +80,10 @@ ENV CUDA_HOME=/usr/local/cuda
 
 RUN curl -s http://host.docker.internal:3333/nccl-2.5.7-1.tar.gz | tar -xzf - \
     && cd nccl-2.5.7-1 \
+    && export NCCL_INSTALL_PATH=/usr/local/cuda/nccl \
     && make -j 4 install \
     && cd ../ && rm -rf nccl-2.5.7-1 && docker-clean
+RUN find /usr/local/cuda/; exit 1
 
 RUN cd /root \
     && export TF_CUDA_VERSION=${CUDA_VERSION%.*} TF_CUDNN_VERSION=${CUDNN_VERSION%.*.*} \
@@ -94,7 +96,7 @@ RUN cd /root \
     && export TF_NEED_HDFS=0 \
     && export TF_NEED_OPENCL=0 \
     && export TF_NEED_JEMALLOC=1 \
-    && export TF_ENABLE_XLA=1 \
+    && export TF_ENABLE_XLA=0 \
     && export TF_NEED_VERBS=0 \
     && export TF_CUDA_CLANG=0 \
     && export TF_NEED_MKL=0 \

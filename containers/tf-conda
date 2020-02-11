@@ -1,0 +1,40 @@
+ARG FROM_TAG
+FROM tacc/tacc-ml:$FROM_TAG
+
+########################################
+# BUILD Args
+########################################
+
+ARG VER
+ARG REL
+ARG TF
+ARG PT
+ARG CV
+
+########################################
+# Configure ENV
+########################################
+
+RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
+
+########################################
+# Install TF, PT, and CUDA
+########################################
+
+RUN conda install --yes --no-update-deps \
+        pillow \
+        h5py \
+        ipykernel \
+        jupyter \
+        matplotlib \
+        mock \
+        scipy \
+        scikit-learn \
+        pandas \
+        cython \
+	tensorflow-gpu=${TF} \
+	cudatoolkit=${CV} \
+	pytorch=${PV} \
+	torchvision \
+    && python -m ipykernel.kernelspec \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*

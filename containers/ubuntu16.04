@@ -1,12 +1,11 @@
-ARG FROM_TAG
-ARG FROM_IMG
-FROM ${FROM_IMG}:${FROM_TAG}
+ARG IMGP
+FROM ${IMGP}ubuntu:16.04
 
 ########################################
 # BUILD Args
 ########################################
 
-ARG FROM_IMG
+ARG MCF
 ARG FLAGS
 ARG VER
 ARG REL
@@ -17,8 +16,9 @@ ARG REL
 
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
-ENV CFLAGS=${FLAGS}
-ENV CXXFLAGS=${FLAGS}
+ENV CFLAGS=${FLAGS} \
+	CXXFLAGS=${FLAGS} \
+	XDG_RUNTIME_DIR=""
 RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 
 ########################################
@@ -40,15 +40,12 @@ RUN apt-get update \
 # Install conda
 ########################################
 
-ENV MINICONDA_VERSION=4.7.12.1 \
-    CONDA_DIR=/opt/conda
+ENV CONDA_DIR=/opt/conda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
 # Download and install miniconda
 RUN mkdir $CONDA_DIR && chmod -R a+rX $CONDA_DIR \
-    && ARCH=$(if [[ $FROM_IMG == *"ppc"* ]]; then echo ppc64le; else echo x86_64; fi) \
-    && MCFILE=Miniconda3-${MINICONDA_VERSION}-Linux-${ARCH}.sh \
-    && curl -s http://host.docker.internal:3333/${MCFILE} > $MCFILE \
-    && bash ${MCFILE} -f -b -p $CONDA_DIR && rm $MCFILE \
+    && curl -s http://host.docker.internal:3333/${MCF} > $MCF \
+    && bash ${MCF} -f -b -p $CONDA_DIR && rm $MCF \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
     && conda update --all --quiet --yes \
