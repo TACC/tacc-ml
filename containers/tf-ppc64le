@@ -18,21 +18,25 @@ RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 # Install TF dependencies
 ########################################
 
-RUN conda install --yes --no-update-deps \
+RUN conda config --prepend channels https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/
+ENV IBM_POWERAI_LICENSE_ACCEPT=yes
+
+RUN conda install --yes \
+	python=3 \
         pillow \
-	'protobuf>=3.8.0' \
         h5py \
         ipykernel \
         jupyter \
         matplotlib \
         mock \
-        'numpy<2' \
         scipy \
         scikit-learn \
         pandas \
         cython \
-	'oauthlib>=3.0.0' \
-	'markdown>=2.6.8' \
+	tensorflow-gpu=${TF} \
+	cudatoolkit=${CV} \
+	pytorch=${PV} \
+	torchvision \
     && python -m ipykernel.kernelspec \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 

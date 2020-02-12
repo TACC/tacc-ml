@@ -118,22 +118,28 @@ clean-base: | docker
 # ML Images
 ####################################
 #BUILD_ML = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 2,$^)
-ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3)
+ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
 ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 
 %-cuda9-tf1.14-pt1.3: containers/tf-conda %
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.14" --build-arg CV="9" --build-arg PT="1.3" ./containers 
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.14" --build-arg CV="9" --build-arg PT="1.3" ./containers &> $@.log
+	touch $@
 %-cuda10-tf1.15-pt1.3: containers/tf-conda %
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.3" ./containers 
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.3" ./containers &> $@.log
+	touch $@
 %-cuda10-tf2.0-pt1.3: containers/tf-conda %
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.0" --build-arg CV="10" --build-arg PT="1.3" ./containers 
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.0" --build-arg CV="10" --build-arg PT="1.3" ./containers &> $@.log
+	touch $@
+ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-%
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.2" ./containers &> $@.log
+	touch $@
 
 ml-images: $(ML)
 	touch $@
 
 .PHONY:clean-base
 clean-ml: | docker
-	for img in $(ML); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img; done
+	for img in $(ML); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img $$img.log; done
 
 ####################################
 # Application Images
