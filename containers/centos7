@@ -5,6 +5,7 @@ FROM ${IMGP}centos:7
 # BUILD Args
 ########################################
 
+ARG HOST
 ARG MCF
 ARG FLAGS
 ARG VER
@@ -43,7 +44,7 @@ ENV CONDA_DIR=/opt/conda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
 # Download and install miniconda
 RUN mkdir $CONDA_DIR && chmod -R a+rX $CONDA_DIR \
-    && curl -s http://host.docker.internal:3333/${MCF} > $MCF \
+    && curl -s http://${HOST}:3333/${MCF} > $MCF \
     && bash ${MCF} -f -b -p $CONDA_DIR && rm $MCF \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \

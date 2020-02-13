@@ -37,13 +37,24 @@ git:
 		echo "[ERROR] $@ does not seem to be on your path. Please install $@"; \
 		exit 1; \
 	fi
-ar:
-	$@ -h &> /dev/null; \
-	if [ ! $$? -eq 1 ]; then \
-		echo "[ERROR] $@ does not seem to be on your path. Please install $@"; \
-		exit 1; \
+####################################
+# Multi-arch stuff
+####################################
+.SILENT: qemu-user-static ppc64le stop_qemu
+.PHONY: stop_qemu
+qemu-user-static: | docker
+	echo "Starting qemu-user-static"
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes &> /dev/null
+	touch $@
+stop_qemu: qemu-user-static ppc64le
+	docker run --rm --privileged multiarch/qemu-user-static --reset &> /dev/null
+	rm $^
+ppc64le: | docker
+	if docker run --rm -it $@/centos:7 uname &> /dev/null; then \
+		touch $@; \
+	else \
+		$(MAKE) qemu-user-static && touch $@ || exit 1; \
 	fi
-
 ####################################
 # Sources
 ####################################
@@ -53,22 +64,14 @@ serve/Miniconda3-4.7.12.1-Linux-x86_64.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh > $@.tmp && mv $@.tmp $@
 serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
-serve/qemu: | serve ar curl
-	# Not necessary on docker desktop
-	rm -rf serve/tmp*
-	curl -s http://security.ubuntu.com/ubuntu/pool/universe/q/qemu/qemu-user-static_2.5+dfsg-5ubuntu10.42_amd64.deb > serve/tmp.deb
-	mkdir serve/tmp && cd serve/tmp && ar x ../tmp.deb && rm ../tmp.deb
-	cd serve/tmp && rm debian-binary control.tar.gz && tar -xf data.tar.xz usr/bin
-	mv serve/tmp/usr/bin/* serve/tmp && rm -rf serve/tmp/{usr,data.tar.xz}
-	mv serve/tmp $@
 .PHONY: downloads
-downloads: $(shell echo serve/Miniconda3-4.7.12.1-Linux-{x86_64,ppc64le}.sh serve/bazel-{0.25.2,0.11.1}-{installer-linux-x86_64.sh,dist.zip} serve/tensorflow-{1.8.0,1.15.2,2.1.0}.tar.gz serve/osu-micro-benchmarks-5.4.4.tar.gz serve/mvapich2-2.3.1.tar.gz serve/qemu)
-
+downloads: $(shell echo serve/Miniconda3-4.7.12.1-Linux-{x86_64,ppc64le}.sh serve/qemu)
 ####################################
 # File server
 ####################################
 .SILENT: server_pid stop_server
-server_pid: | downloads python
+HOST := $(shell [ $$(uname) == "Darwin" ] && echo host.docker.internal || echo $$(hostname -I | cut -f 2 -d ' '))
+server_pid: serve | python
 	cd serve \
 	&& if python -V 2>&1 | grep -q "Python 2"; then \
 		echo "Starting python2 file server"; \
@@ -82,12 +85,15 @@ server_pid: | downloads python
 stop_server: server_pid
 	kill -9 $(shell cat $<) && rm $<
 	echo "Stopped file server"
-
+####################################
+# Stop Daemons
+####################################
+halt: stop_server stop_qemu
 ####################################
 # BUILD Commands
 ####################################
-BUILD = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 1,$^)
-PUSH = docker push $(ORG)/$@:$(VER)
+BUILD = docker build --build-arg HOST=$(HOST) --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 1,$^)
+PUSH = docker push $(ORG)/tacc-ml:$@
 ####################################
 # CFLAGS
 ####################################
@@ -100,15 +106,17 @@ PPC := -mcpu=power9 -O2 -pipe
 BASE := $(shell echo {,ppc64le-}{centos7,ubuntu16.04})
 BASE_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'echo $$CFLAGS | grep "pipe" && ls /etc/$@-release'
 
+containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
+	cp $< $@
 %: containers/% serve/Miniconda3-4.7.12.1-Linux-x86_64.sh server_pid | docker
 	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg IMGP="" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
 	touch $@
-ppc64le-%: containers/% serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh server_pid | docker
+ppc64le-%: containers/% serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh server_pid ppc64le | docker
 	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg IMGP="ppc64le/" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
 	touch $@
 base-images: $(BASE)
 	touch $@
-	$(MAKE) stop_server
+	$(MAKE) halt
 
 .PHONY:clean-base
 clean-base: | docker
@@ -121,20 +129,25 @@ clean-base: | docker
 ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
 ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 
-%-cuda9-tf1.14-pt1.3: containers/tf-conda %
+%-cuda9-tf1.14-pt1.3: containers/tf-conda % | docker
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.14" --build-arg CV="9" --build-arg PT="1.3" ./containers &> $@.log
+	$(PUSH)
 	touch $@
-%-cuda10-tf1.15-pt1.3: containers/tf-conda %
+%-cuda10-tf1.15-pt1.3: containers/tf-conda % | docker
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.3" ./containers &> $@.log
+	$(PUSH)
 	touch $@
-%-cuda10-tf2.0-pt1.3: containers/tf-conda %
+%-cuda10-tf2.0-pt1.3: containers/tf-conda % | docker
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.0" --build-arg CV="10" --build-arg PT="1.3" ./containers &> $@.log
+	$(PUSH)
 	touch $@
-ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-%
+ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le | docker
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.2" ./containers &> $@.log
+	$(PUSH)
 	touch $@
 
 ml-images: $(ML)
+	$(MAKE) halt
 	touch $@
 
 .PHONY:clean-base

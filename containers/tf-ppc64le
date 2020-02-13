@@ -39,18 +39,3 @@ RUN conda install --yes \
 	torchvision \
     && python -m ipykernel.kernelspec \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
-
-########################################
-# Install TF
-########################################
-
-ARG TF_V
-RUN pip install tensorflow-gpu==$TF_V \
-    && docker-clean
-
-########################################
-# Install pytorch
-########################################
-
-RUN pip install torch torchvision \
-    && docker-clean
