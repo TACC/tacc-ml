@@ -15,10 +15,10 @@ Containers for running ML applications on TACC GPU sysems
     <td>Cuda</td>
     <td>TensorFlow</td>
     <td>PyTorch</td>
-    <td>[Maverick2](https://portal.tacc.utexas.edu/user-guides/maverick2)</td>
-    <td>[RTX](https://fronteraweb.tacc.utexas.edu/user-guide/system/#gpu-nodes)</td>
-    <td>[Longhorn](https://portal.tacc.utexas.edu/user-guides/longhorn)</td>
-    <td>[Lonestar5](https://portal.tacc.utexas.edu/user-guides/lonestar5)</td>
+    <td><a href="https://portal.tacc.utexas.edu/user-guides/maverick2">Maverick2</a></td>
+    <td><a href="https://fronteraweb.tacc.utexas.edu/user-guide/system/#gpu-nodes">RTX</a></td>
+    <td><a href="https://portal.tacc.utexas.edu/user-guides/longhorn">Longhorn</a></td>
+    <td><a href="https://portal.tacc.utexas.edu/user-guides/lonestar5">Lonestar5</a></td>
   </tr>
   <tr>
     <td>9</td>
@@ -27,14 +27,14 @@ Containers for running ML applications on TACC GPU sysems
     <td></td>
     <td></td>
     <td></td>
-    <td>[X](#centos7-cuda9-tf1.14-pt1.3)</td>
+    <td><a href="#centos7-cuda9-tf1.14-pt1.3">X</a></td>
   </tr>
   <tr>
     <td>10</td>
     <td>1.15</td>
     <td>1.3</td>
-    <td>[X](#centos7-cuda10-tf1.15-pt1.3)</td>
-    <td>[X](#centos7-cuda10-tf1.15-pt1.3)</td>
+    <td><a href="#centos7-cuda10-tf1.15-pt1.3">X</a></td>
+    <td><a href="#centos7-cuda10-tf1.15-pt1.3">X</a></td>
     <td></td>
     <td></td>
   </tr>
@@ -44,15 +44,15 @@ Containers for running ML applications on TACC GPU sysems
     <td>1.2</td>
     <td></td>
     <td></td>
-    <td>[X](#ppc64le-centos7-cuda10-tf1.15-pt1.2)</td>
+    <td><a href="#ppc64le-centos7-cuda10-tf1.15-pt1.2">X</a></td>
     <td></td>
   </tr>
   <tr>
     <td>10</td>
     <td>2</td>
     <td>1.3</td>
-    <td>[X](#centos7-cuda10-tf2.0-pt1.3)</td>
-    <td>[X](#centos7-cuda10-tf2.0-pt1.3)</td>
+    <td><a href="#centos7-cuda10-tf2.0-pt1.3">X</a></td>
+    <td><a href="#centos7-cuda10-tf2.0-pt1.3">X</a></td>
     <td></td>
     <td></td>
   </tr>
