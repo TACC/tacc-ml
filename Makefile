@@ -121,6 +121,7 @@ base-images: $(BASE)
 .PHONY:clean-base
 clean-base: | docker
 	for img in $(BASE); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img $$img.log; done
+	$(MAKE) halt
 
 ####################################
 # ML Images
@@ -153,13 +154,14 @@ ml-images: $(ML)
 .PHONY:clean-base
 clean-ml: | docker
 	for img in $(ML); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img $$img.log; done
+	$(MAKE) halt
 
 ####################################
 # Application Images
 ####################################
 
-all: base-images mpi-images
+all: ml-images
 	docker system prune
 
-clean: clean-mpi clean-base | docker
+clean: clean-base clean-mpi | docker
 	docker system prune
