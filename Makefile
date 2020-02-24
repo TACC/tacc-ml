@@ -25,7 +25,7 @@ docker:
 		echo "\n[ERROR] Could not communicate with docker daemon. You may need to run with sudo.\n"; \
 		exit 1; \
 	fi
-python curl:
+wget python curl:
 	$@ -h &> /dev/null; \
 	if [ ! $$? -eq 0 ]; then \
 		echo "[ERROR] $@ does not seem to be on your path. Please install $@"; \
@@ -46,9 +46,12 @@ qemu-user-static: | docker
 	echo "Starting qemu-user-static"
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes &> /dev/null
 	touch $@
-stop_qemu: qemu-user-static ppc64le
-	docker run --rm --privileged multiarch/qemu-user-static --reset &> /dev/null
-	rm $^
+stop_qemu:
+	if [ -e qemu-user-static ]; then \
+		docker run --rm --privileged multiarch/qemu-user-static --reset &> /dev/null \
+		&& rm qemu-user-static; \
+	fi
+	[ -e ppc64le ] && rm ppc64le
 ppc64le: | docker
 	if docker run --rm -it $@/centos:7 uname &> /dev/null; then \
 		touch $@; \
@@ -64,8 +67,19 @@ serve/Miniconda3-4.7.12.1-Linux-x86_64.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh > $@.tmp && mv $@.tmp $@
 serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
+.PRECIOUS: serve/cudatoolkit-% serve/tensorflow-base-%
+serve/cudatoolkit-%: | serve curl
+	curl -sL https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le/$(notdir $@) > $@.tmp && mv $@.tmp $@
+serve/tensorflow-base-%: | serve curl
+	curl -sL https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le/$(notdir $@) > $@.tmp && mv $@.tmp $@
+#serve/powerai: | serve wget
+#        wget -e robots=off -np -nH --cut-dirs=8 -P serve/powerai.tmp -A '*.bz2' -r -L https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le/
+#        mv $@.tmp $@
+#PPCP = $(shell echo serve/cudatoolkit-{10.1.105-446.8cc2201,10.1.168-533.g8d035fd,10.1.243-616.gc122b8b}.tar.bz2 serve/tensorflow-base-{1.15.0-gpu_py36_590d6ee_64210.g4a039ec,1.15.0-gpu_py37_590d6ee_64210.g4a039ec,2.1.0-gpu_py36_e5bf8de_72635.gf8ef88c,2.1.0-gpu_py37_e5bf8de_72635.gf8ef88c}.tar.bz2)
+PPCP = $(shell echo serve/cudatoolkit-{10.1.243-616.gc122b8b,10.1.105-446.8cc2201,10.1.168-533.g8d035fd,10.1.243-616.gc122b8b}.tar.bz2 serve/tensorflow-base-{1.15.0-gpu_py36_590d6ee_64210.g4a039ec,1.15.0-gpu_py37_590d6ee_64210.g4a039ec,2.1.0-gpu_py36_e5bf8de_72635.gf8ef88c,2.1.0-gpu_py37_e5bf8de_72635.gf8ef88c,1.15.2-gpu_py37_5d80e1e_64318.g33ef15a}.tar.bz2)
+	
 .PHONY: downloads
-downloads: $(shell echo serve/Miniconda3-4.7.12.1-Linux-{x86_64,ppc64le}.sh serve/qemu)
+downloads: $(shell echo serve/Miniconda3-4.7.12.1-Linux-{x86_64,ppc64le}.sh $(PPCP))
 ####################################
 # File server
 ####################################
@@ -82,9 +96,12 @@ server_pid: serve | python
 	fi
 
 .PHONY: stop_server
-stop_server: server_pid
-	kill -9 $(shell cat $<) && rm $<
-	echo "Stopped file server"
+stop_server:
+	if [ -e server_pid ]; then \
+		kill -9 $$(cat server_pid) \
+		&& rm server_pid \
+		&& echo "Stopped file server"; \
+	fi
 ####################################
 # Stop Daemons
 ####################################
@@ -121,12 +138,14 @@ base-images: $(BASE)
 .PHONY:clean-base
 clean-base: | docker
 	for img in $(BASE); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img $$img.log; done
+	[ -e base-images ] && rm base-images
 	$(MAKE) halt
 
 ####################################
 # ML Images
 ####################################
 #BUILD_ML = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 2,$^)
+#ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
 ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
 ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 
@@ -142,18 +161,24 @@ ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.0" --build-arg CV="10" --build-arg PT="1.3" ./containers &> $@.log
 	$(PUSH)
 	touch $@
-ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10" --build-arg PT="1.2" ./containers &> $@.log
+PPC15=$(shell echo serve/{tensorflow-base-1.15.2-gpu_py37_5d80e1e_64318.g33ef15a,cudatoolkit-10.1.243-616.gc122b8b}.tar.bz2)
+ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le $(PPC15) server_pid | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10.2" --build-arg PT="1.2" --build-arg PPCP="$(notdir $(PPC15))" ./containers 2>&1 | tee $@.log
 	$(PUSH)
 	touch $@
+#ppc64le-%-cuda10-tf2.1-pt1.3: containers/tf-ppc64le ppc64le-% ppc64le $(PPCP) | docker
+#	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
+#	$(PUSH)
+#	touch $@
 
 ml-images: $(ML)
 	$(MAKE) halt
 	touch $@
 
-.PHONY:clean-base
+.PHONY:clean-ml
 clean-ml: | docker
 	for img in $(ML); do docker rmi $(ORG)/tacc-ml:$$img; rm $$img $$img.log; done
+	[ -e ml-images ] && rm ml-images
 	$(MAKE) halt
 
 ####################################

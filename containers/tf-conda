@@ -21,11 +21,9 @@ RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 # Install TF, PT, and CUDA
 ########################################
 
-RUN conda install --yes --no-update-deps \
+RUN conda install -q --yes --no-update-deps \
         pillow \
         h5py \
-        ipykernel \
-        jupyter \
         matplotlib \
         mock \
         scipy \
@@ -34,7 +32,18 @@ RUN conda install --yes --no-update-deps \
         cython \
 	tensorflow-gpu=${TF} \
 	cudatoolkit=${CV} \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+RUN conda install -q --yes --no-update-deps \
+        ipykernel \
+        jupyter \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+# Install pytorch
+RUN conda install -q --yes --no-update-deps \
 	pytorch=${PV} \
 	torchvision \
-    && python -m ipykernel.kernelspec \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+# Create ipython kernel
+RUN python -m ipykernel.kernelspec

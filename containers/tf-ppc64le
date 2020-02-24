@@ -5,8 +5,13 @@ FROM tacc/tacc-ml:$FROM_TAG
 # BUILD Args
 ########################################
 
+ARG HOST
 ARG VER
 ARG REL
+ARG TF
+ARG PT
+ARG CV
+ARG PPCP
 
 ########################################
 # Configure ENV
@@ -18,24 +23,40 @@ RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 # Install TF dependencies
 ########################################
 
-RUN conda config --prepend channels https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/
+# Prepend PowerAI channel
+RUN conda config --system --prepend channels https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/ \
+    && conda config --system --set channel_priority strict
+# Accept IBM license
 ENV IBM_POWERAI_LICENSE_ACCEPT=yes
 
-RUN conda install --yes \
-	python=3 \
+RUN ( mkdir -p ${CONDA_DIR}/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le && cd ${CONDA_DIR}/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le && for f in $PPCP; do \
+		echo $f; D=${f/.tar.bz2/}; \
+		mkdir $D; \
+		curl -s http://$HOST:3333/$f > $f; \
+		tar -xjf $f -C $D; \
+	done; ls ) && conda install --yes \
         pillow \
         h5py \
-        ipykernel \
-        jupyter \
         matplotlib \
         mock \
         scipy \
         scikit-learn \
         pandas \
         cython \
-	tensorflow-gpu=${TF} \
-	cudatoolkit=${CV} \
+	"tensorflow-gpu=${TF}" \
+	"cudatoolkit<${CV}" \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+RUN conda install -q --yes --no-update-deps \
+        ipykernel \
+        jupyter \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+# Install pytorch
+RUN conda install -q --yes --no-update-deps \
 	pytorch=${PV} \
 	torchvision \
-    && python -m ipykernel.kernelspec \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+# Create ipython kernel
+RUN python -m ipykernel.kernelspec
