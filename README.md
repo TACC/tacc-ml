@@ -78,10 +78,10 @@ Once you are finished building your new container, push it to dockerhub and then
   </tr>
   <tr>
     <td>10</td>
-    <td>2</td>
+    <td>2.1</td>
     <td>1.3</td>
-    <td><a href="#centos7-cuda10-tf2.0-pt1.3">X</a></td>
-    <td><a href="#centos7-cuda10-tf2.0-pt1.3">X</a></td>
+    <td><a href="#centos7-cuda10-tf2.1-pt1.3">X</a></td>
+    <td><a href="#centos7-cuda10-tf2.1-pt1.3">X</a></td>
     <td></td>
     <td></td>
   </tr>
@@ -90,9 +90,9 @@ Once you are finished building your new container, push it to dockerhub and then
 ### centos7-cuda10-tf1.15-pt1.3
 * [Dockerfile](containers/tf-conda)
 * URL: `tacc/tacc-ml:centos7-cuda10-tf1.15-pt1.3`
-### centos7-cuda10-tf2.0-pt1.3
+### centos7-cuda10-tf2.1-pt1.3
 * [Dockerfile](containers/tf-conda)
-* URL: `tacc/tacc-ml:centos7-cuda10-tf2.0-pt1.3`
+* URL: `tacc/tacc-ml:centos7-cuda10-tf2.1-pt1.3`
 ### centos7-cuda9-tf1.14-pt1.3
 * [Dockerfile](containers/tf-conda)
 * URL: `tacc/tacc-ml:centos7-cuda9-tf1.14-pt1.3`
@@ -146,10 +146,10 @@ Once you are finished building your new container, push it to dockerhub and then
   </tr>
   <tr>
     <td>10</td>
-    <td>2.0</td>
+    <td>2.1</td>
     <td>1.3</td>
-    <td><a href="#ubuntu16.04-cuda10-tf2.0-pt1.3">X</a></td>
-    <td><a href="#ubuntu16.04-cuda10-tf2.0-pt1.3">X</a></td>
+    <td><a href="#ubuntu16.04-cuda10-tf2.1-pt1.3">X</a></td>
+    <td><a href="#ubuntu16.04-cuda10-tf2.1-pt1.3">X</a></td>
     <td></td>
     <td></td>
   </tr>
@@ -161,9 +161,9 @@ Once you are finished building your new container, push it to dockerhub and then
 ### ubuntu16.04-cuda10-tf1.15-pt1.3
 * [Dockerfile](containers/tf-conda)
 * URL: `tacc/tacc-ml:ubuntu16.04-cuda10-tf1.15-pt1.3`
-### ubuntu16.04-cuda10-tf2.0-pt1.3
+### ubuntu16.04-cuda10-tf2.1-pt1.3
 * [Dockerfile](containers/tf-conda)
-* URL: `tacc/tacc-ml:ubuntu16.04-cuda10-tf2.0-pt1.3`
+* URL: `tacc/tacc-ml:ubuntu16.04-cuda10-tf2.1-pt1.3`
 ### ubuntu16.04-cuda9-tf1.14-pt1.3
 * [Dockerfile](containers/tf-conda)
 * URL: `tacc/tacc-ml:ubuntu16.04-cuda9-tf1.14-pt1.3`
