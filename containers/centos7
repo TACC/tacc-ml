@@ -33,7 +33,10 @@ RUN chmod a+rx /usr/bin/docker-clean && docker-clean
 ########################################
 
 RUN yum -y groupinstall "Development tools" \
-	&& yum -y install curl which \
+	&& docker-clean
+
+RUN yum -y install curl which epel-release \
+	&& yum install -y lbzip2 \
 	&& docker-clean
 
 ########################################

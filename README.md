@@ -10,10 +10,27 @@ All images are hosted on [Docker Hub](https://hub.docker.com/r/tacc/tacc-ml/tags
 Please refer to our system and version tables which support the following base operating systems:
 
 - [Centos7](#centos7-images)
-- [Ubuntu 16.04](#ubuntu16.04-images)
+- [Ubuntu 16.04](#ubuntu1604-images)
 
+## Usage
 
+```
+$ module load tacc-singularity
+$ singularity pull docker://tacc/tacc-ml:ppc64le-ubuntu16.04-cuda10-tf1.15-pt1.2
+$ singularity exec --nv tacc-ml_ppc64le-ubuntu16.04-cuda10-tf1.15-pt1.2.sif python -c 'import tensorflow as tf; print(tf.test.is_gpu_available())'                                                           
+```
 
+## Development
+
+Begin `FROM` an image that supports your target TACC system, and add any necessary packages from there.
+
+```
+FROM tacc/tacc-ml:ppc64le-ubuntu16.04-cuda10-tf1.15-pt1.2
+
+RUN conda install new_package
+```
+
+Once you are finished building your new container, push it to dockerhub and then pull to TACC.
 
 ## Centos7 Images
 <table>

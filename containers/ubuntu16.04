@@ -34,7 +34,7 @@ RUN chmod a+rx /usr/bin/docker-clean && docker-clean
 ########################################
 
 RUN apt-get update \
-	&& apt-get install -yq --no-install-recommends curl build-essential \
+	&& apt-get install -yq --no-install-recommends curl build-essential lbzip2 \
 	&& docker-clean
 
 ########################################
