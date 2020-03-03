@@ -85,15 +85,6 @@ Once you are finished building your new container, push it to dockerhub and then
     <td></td>
     <td></td>
   </tr>
-  <tr>
-    <td>10</td>
-    <td>2.1</td>
-    <td>1.3</td>
-    <td></td>
-    <td></td>
-    <td><a href="#ppc64le-centos7-cuda10-tf2.1-pt1.3">X</a></td>
-    <td></td>
-  </tr>
 </table>
 
 ### centos7-cuda10-tf1.15-pt1.3
@@ -108,9 +99,6 @@ Once you are finished building your new container, push it to dockerhub and then
 ### ppc64le-centos7-cuda10-tf1.15-pt1.2
 * [Dockerfile](containers/tf-ppc64le)
 * URL: `tacc/tacc-ml:ppc64le-centos7-cuda10-tf1.15-pt1.2`
-### ppc64le-centos7-cuda10-tf2.1-pt1.3
-* [Dockerfile](containers/tf-ppc64le)
-* URL: `tacc/tacc-ml:ppc64le-centos7-cuda10-tf2.1-pt1.3`
 
 ## Ubuntu16.04 Images
 <table>
@@ -165,23 +153,11 @@ Once you are finished building your new container, push it to dockerhub and then
     <td></td>
     <td></td>
   </tr>
-  <tr>
-    <td>10</td>
-    <td>2.1</td>
-    <td>1.3</td>
-    <td></td>
-    <td></td>
-    <td><a href="#ppc64le-ubuntu16.04-cuda10-tf2.1-pt1.3">X</a></td>
-    <td></td>
-  </tr>
 </table>
 
 ### ppc64le-ubuntu16.04-cuda10-tf1.15-pt1.2
 * [Dockerfile](containers/tf-ppc64le)
 * URL: `tacc/tacc-ml:ppc64le-ubuntu16.04-cuda10-tf1.15-pt1.2`
-### ppc64le-ubuntu16.04-cuda10-tf2.1-pt1.3
-* [Dockerfile](containers/tf-ppc64le)
-* URL: `tacc/tacc-ml:ppc64le-ubuntu16.04-cuda10-tf2.1-pt1.3`
 ### ubuntu16.04-cuda10-tf1.15-pt1.3
 * [Dockerfile](containers/tf-conda)
 * URL: `tacc/tacc-ml:ubuntu16.04-cuda10-tf1.15-pt1.3`
