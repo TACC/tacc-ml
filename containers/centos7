@@ -35,7 +35,7 @@ RUN chmod a+rx /usr/bin/docker-clean && docker-clean
 RUN yum -y groupinstall "Development tools" \
 	&& docker-clean
 
-RUN yum -y install curl which epel-release \
+RUN yum -y install curl which epel-release ca-certificates \
 	&& yum install -y lbzip2 \
 	&& docker-clean
 
@@ -51,6 +51,7 @@ RUN mkdir $CONDA_DIR && chmod -R a+rX $CONDA_DIR \
     && bash ${MCF} -f -b -p $CONDA_DIR && rm $MCF \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
+    && conda config --system --set default_threads 4 \
     && conda update --all --quiet --yes \
     && docker-clean \
     && rm -rf ${CONDA_DIR}/pkgs/*
