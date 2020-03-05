@@ -133,11 +133,9 @@ containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 	cp $< $@
 %: containers/% serve/Miniconda3-4.7.12.1-Linux-x86_64.sh server_pid | docker
 	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg IMGP="" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
-	$(PUSHC)
 	touch $@
 ppc64le-%: containers/% serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh server_pid ppc64le | docker
 	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg IMGP="ppc64le/" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
-	$(PUSHC)
 	touch $@
 base-images: $(BASE)
 	touch $@
