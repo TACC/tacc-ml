@@ -60,10 +60,10 @@ ppc64le: | docker
 ####################################
 serve:
 	mkdir serve
-serve/Miniconda3-4.7.12.1-Linux-x86_64.sh: | serve curl
-	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh > $@.tmp && mv $@.tmp $@
-serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh: | serve curl
-	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
+serve/Miniconda3-py37_4.9.2-Linux-x86_64.sh: | serve curl
+	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-py37_4.9.2-Linux-x86_64.sh > $@.tmp && mv $@.tmp $@
+serve/Miniconda3-py37_4.9.2-Linux-ppc64le.sh: | serve curl
+	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-py37_4.9.2-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
 serve/cudatoolkit-%: | serve curl
 	curl -sL https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le/$(notdir $@) > $@.tmp && mv $@.tmp $@
 serve/tensorflow-base-%: | serve curl
@@ -84,7 +84,7 @@ serve/pytorch-base-%: | serve curl
 #PPCP = $(shell echo serve/cudatoolkit-{10.1.105-446.8cc2201,10.1.168-533.g8d035fd,10.1.243-616.gc122b8b}.tar.bz2 serve/tensorflow-base-{1.15.0-gpu_py36_590d6ee_64210.g4a039ec,1.15.0-gpu_py37_590d6ee_64210.g4a039ec,2.1.0-gpu_py36_e5bf8de_72635.gf8ef88c,2.1.0-gpu_py37_e5bf8de_72635.gf8ef88c}.tar.bz2)
 
 .PHONY: downloads
-downloads: $(shell echo serve/Miniconda3-4.7.12.1-Linux-{x86_64,ppc64le}.sh $(PPC15))
+downloads: $(shell echo serve/Miniconda3-py37_4.9.2-Linux-{x86_64,ppc64le}.sh $(PPC15))
 ####################################
 # File server
 ####################################
@@ -131,10 +131,10 @@ BASE_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'echo $$CFLAGS | grep 
 
 containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 	cp $< $@
-%: containers/% serve/Miniconda3-4.7.12.1-Linux-x86_64.sh server_pid | docker
+%: containers/% serve/Miniconda3-py37_4.9.2-Linux-x86_64.sh server_pid | docker
 	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg IMGP="" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
 	touch $@
-ppc64le-%: containers/% serve/Miniconda3-4.7.12.1-Linux-ppc64le.sh server_pid ppc64le | docker
+ppc64le-%: containers/% serve/Miniconda3-py37_4.9.2-Linux-ppc64le.sh server_pid ppc64le | docker
 	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg IMGP="ppc64le/" --build-arg MCF="$(notdir $(word 2,$^))" ./containers &> $@.log
 	touch $@
 base-images: $(BASE)
@@ -165,6 +165,10 @@ ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 	touch $@
 %-cuda10-tf2.1-pt1.3: containers/tf-conda % | docker
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
+	$(PUSHC)
+	touch $@
+%-cuda10-tf2.2-pt1.7: containers/tf-conda % | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.2" --build-arg CV="10.2" --build-arg PT="1.7" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
 ##### ppc images ####################
