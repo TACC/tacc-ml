@@ -1,5 +1,4 @@
-ARG IMGP
-FROM ${IMGP}centos:7
+FROM centos:7
 
 ########################################
 # BUILD Args

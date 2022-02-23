@@ -7,6 +7,9 @@ server_pid
 base-images
 ml-images
 centos7
+ppc64le
 ppc64le-centos7
 ppc64le-ubuntu16.04
+ppc64le-ubuntu20.04
 ubuntu16.04
+ubuntu20.04
