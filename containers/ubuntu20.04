@@ -1,0 +1,56 @@
+FROM ubuntu:20.04
+
+########################################
+# BUILD Args
+########################################
+
+ARG HOST
+ARG MCF
+ARG FLAGS
+ARG VER
+ARG REL
+
+########################################
+# Configure ENV
+########################################
+
+SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CFLAGS=${FLAGS} \
+	CXXFLAGS=${FLAGS} \
+	XDG_RUNTIME_DIR=""
+RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
+
+########################################
+# Add docker-clean
+########################################
+
+ADD extras/docker-clean /usr/bin/docker-clean
+RUN chmod a+rx /usr/bin/docker-clean && docker-clean
+
+########################################
+# Necessary packages
+########################################
+
+RUN apt-get update \
+	&& apt-get install -yq --no-install-recommends curl build-essential lbzip2 ca-certificates \
+	&& docker-clean
+
+########################################
+# Install conda
+########################################
+
+ENV CONDA_DIR=/opt/conda
+ENV PATH=${CONDA_DIR}/bin:${PATH}
+# Download and install miniconda
+RUN mkdir $CONDA_DIR && chmod -R a+rX $CONDA_DIR \
+    && curl -s http://${HOST}:3333/${MCF} > $MCF \
+    && bash ${MCF} -f -b -p $CONDA_DIR && rm $MCF \
+    && conda config --system --set auto_update_conda false \
+    && conda config --system --set show_channel_urls true \
+    && conda config --system --set default_threads 4 \
+    && conda update --all --quiet --yes \
+    && docker-clean \
+    && rm -rf ${CONDA_DIR}/pkgs/*
+# Activate conda on login
+RUN ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
