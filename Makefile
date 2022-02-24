@@ -150,6 +150,10 @@ ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
+%-cuda10-tf2.4-pt1.7: containers/tf-conda % | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.4" --build-arg CV="10.2" --build-arg PT="1.7" ./containers &> $@.log
+	$(PUSHC)
+	touch $@
 
 ##### ppc images ####################
 ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le | server_pid docker
