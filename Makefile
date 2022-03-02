@@ -113,7 +113,7 @@ PPC := -mcpu=power9 -O2 -pipe
 # Base Images
 ####################################
 BASE_AMD64 := $(shell echo {centos7,ubuntu20.04})
-BASE_PPC64LE := $(shell echo {ppc64le-}{centos7,ubuntu20.04})
+BASE_PPC64LE := $(shell echo ppc64le-{centos7,ubuntu20.04})
 
 containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 	cp $< $@
