@@ -133,10 +133,15 @@ base-images-ppc64le: $(BASE_PPC64LE)
 	touch $@
 	$(MAKE) halt
 
-.PHONY:clean-base
-clean-base: | docker
-	for img in $(BASE_AMD64) $(BASE_PPC64LE); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
-	[ -e base-images ] && rm base-images
+.PHONY: clean-base clean-base-amd64 clean-base-ppc64le
+clean-base: | clean-base-amd64 clean-base-ppc64le
+clean-base-amd64: | docker
+	for img in $(BASE_AMD64); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
+	[ -e base-images-amd64 ] && rm base-images-amd64
+	$(MAKE) halt
+clean-base-ppc64le: | docker
+	for img in $(BASE_PPC64LE); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
+	[ -e base-images-ppc64le ] && rm base-images-ppc64le
 	$(MAKE) halt
 
 ####################################
@@ -183,10 +188,15 @@ ml-images-ppc64le: $(ML_PPC64LE)
 	$(MAKE) halt
 	touch $@
 
-.PHONY:clean-ml
-clean-ml: | docker
-	for img in $(ML_AMD64) $(ML_PPC64LE); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
-	[ -e ml-images ] && rm ml-images
+.PHONY: clean-ml clean-ml-amd64 clean-ml-ppc64le
+clean-ml: | clean-ml-amd64 clean-ml-ppc64le
+clean-ml-amd64: | docker
+	for img in $(ML_AMD64); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
+	[ -e ml-images-amd64 ] && rm ml-images-amd64
+	$(MAKE) halt
+clean-ml-ppc64le: | docker
+	for img in $(ML_PPC64LE); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
+	[ -e ml-images-ppc64le ] && rm ml-images-ppc64le
 	$(MAKE) halt
 
 ####################################
