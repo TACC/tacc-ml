@@ -11,7 +11,6 @@ ARG REL
 ARG TF
 ARG PT
 ARG CV
-ARG PPCP
 
 ########################################
 # Configure ENV
@@ -29,14 +28,7 @@ RUN conda config --system --prepend channels https://public.dhe.ibm.com/ibmdl/ex
 # Accept IBM license
 ENV IBM_POWERAI_LICENSE_ACCEPT=yes
 
-RUN ( cd ${CONDA_DIR}/pkgs && touch urls urls.txt && \
-	for f in $PPCP; do \
-		echo $f; D=${f/.tar.bz2/}; \
-		mkdir $D; \
-		curl -s http://$HOST:3333/$f > $f; \
-		lbzip2 -dc $f | tar -xf - -C $D; \
-		echo "https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le/$f" >> urls.txt; \
-	done; ls ) && conda install -q --yes \
+RUN conda install -q --yes \
         pillow \
         matplotlib \
         mock \

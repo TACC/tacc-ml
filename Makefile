@@ -112,7 +112,8 @@ PPC := -mcpu=power9 -O2 -pipe
 ####################################
 # Base Images
 ####################################
-BASE := $(shell echo {,ppc64le-}{centos7,ubuntu20.04})
+BASE_AMD64 := $(shell echo {centos7,ubuntu20.04})
+BASE_PPC64LE := $(shell echo {ppc64le-}{centos7,ubuntu20.04})
 
 containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 	cp $< $@
@@ -122,20 +123,27 @@ containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 ppc64le-%: containers/% serve/Miniconda3-py39_4.11.0-Linux-ppc64le.sh server_pid ppc64le | docker
 	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg MCF="$(notdir $(word 2,$^))" --platform linux/ppc64le ./containers &> $@.log
 	touch $@
-base-images: $(BASE)
+base-images: $(BASE_AMD64) $(BASE_PPC64LE)
+	touch $@
+	$(MAKE) halt
+base-images-amd64: $(BASE_AMD64)
+	touch $@
+	$(MAKE) halt
+base-images-ppc64le: $(BASE_PPC64LE)
 	touch $@
 	$(MAKE) halt
 
 .PHONY:clean-base
 clean-base: | docker
-	for img in $(BASE); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
+	for img in $(BASE_AMD64) $(BASE_PPC64LE); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
 	[ -e base-images ] && rm base-images
 	$(MAKE) halt
 
 ####################################
 # ML Images
 ####################################
-ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.1}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
+ML_AMD64 := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14-pt1.3,cuda10-tf1.15-pt1.3,cuda10-tf2.1-pt1.3,cuda10-tf2.4-pt1.7})
+ML_PPC64LE := $(shell echo ppc64le-{ubuntu16.04,centos7}-{cuda10-tf1.15-pt1.2,cuda10-tf2.1-pt1.3})
 
 ##### x86 images ####################
 %-cuda9-tf1.14-pt1.3: containers/tf-conda % | docker
@@ -156,22 +164,28 @@ ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.
 	touch $@
 
 ##### ppc images ####################
-ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le | server_pid docker
+ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le | docker
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10.2" --build-arg PT="1.2" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
-#ppc64le-%-cuda10-tf2.1-pt1.3: containers/tf-ppc64le ppc64le-% ppc64le $(PPCP) | docker
-#	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
-#	$(PUSH)
-#	touch $@
+ppc64le-%-cuda10-tf2.1-pt1.3: containers/tf-ppc64le ppc64le-% ppc64le | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
+	$(PUSH)
+	touch $@
 
-ml-images: $(ML)
+ml-images: $(ML_AMD64) $(ML_PPC64LE)
+	$(MAKE) halt
+	touch $@
+ml-images-amd64: $(ML_AMD64)
+	$(MAKE) halt
+	touch $@
+ml-images-ppc64le: $(ML_PPC64LE)
 	$(MAKE) halt
 	touch $@
 
 .PHONY:clean-ml
 clean-ml: | docker
-	for img in $(ML); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
+	for img in $(ML_AMD64) $(ML_PPC64LE); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
 	[ -e ml-images ] && rm ml-images
 	$(MAKE) halt
 
