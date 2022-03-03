@@ -152,7 +152,7 @@ clean-base: | docker
 ####################################
 #BUILD_ML = docker build --build-arg ORG=$(ORG) --build-arg VER=$(VER) --build-arg REL=$(@) -t $(ORG)/tacc-ml:$@ -f $(word 2,$^)
 #ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.0}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
-ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14,cuda10-tf1.15,cuda10-tf2.1}-pt1.3 ppc64le-{ubuntu16.04,centos7}-cuda10-tf1.15-pt1.2)
+ML := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14-pt1.3,cuda10-tf1.15-pt1.3,cuda10-tf2.1-pt1.3,cuda10-tf2.4-pt1.7} ppc64le-{ubuntu16.04,centos7}-{cuda10-tf1.15-pt1.2,cuda10-tf2.1-pt1.3})
 ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 ##### x86 images ####################
 %-cuda9-tf1.14-pt1.3: containers/tf-conda % | docker
@@ -167,10 +167,11 @@ ML_TEST = docker run --rm -it $(ORG)/tacc-ml:$@ bash -c 'ls /etc/$@-release'
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
-%-cuda10-tf2.2-pt1.7: containers/tf-conda % | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.2" --build-arg CV="10.2" --build-arg PT="1.7" ./containers &> $@.log
+%-cuda10-tf2.4-pt1.7: containers/tf-conda % | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.4" --build-arg CV="10.2" --build-arg PT="1.7" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
+
 ##### ppc images ####################
 PPC15=$(shell echo serve/{tensorflow-base-1.15.2-gpu_py37_5d80e1e_64318.g33ef15a,cudatoolkit-10.1.243-616.gc122b8b,nccl-2.4.8-586.gdba67b7,tensorrt-6.0.1.5-py37_628.g4ac44fb,cudnn-7.6.3_10.1-590.g5627c5e,pytorch-base-1.2.0-gpu_py37_20251.ga479d1e}.tar.bz2)
 .PRECIOUS: $(PPC15)
@@ -178,10 +179,10 @@ ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le $(PPC15) 
 	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10.2" --build-arg PT="1.2" --build-arg PPCP="$(notdir $(PPC15))" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
-#ppc64le-%-cuda10-tf2.1-pt1.3: containers/tf-ppc64le ppc64le-% ppc64le $(PPCP) | docker
-#	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
-#	$(PUSH)
-#	touch $@
+ppc64le-%-cuda10-tf2.1-pt1.3: containers/tf-ppc64le ppc64le-% ppc64le $(PPCP) | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
+	$(PUSH)
+	touch $@
 
 ml-images: $(ML)
 	$(MAKE) halt
