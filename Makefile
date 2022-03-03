@@ -152,24 +152,12 @@ clean-base-ppc64le: | docker
 ####################################
 # ML Images
 ####################################
-ML_AMD64 := $(shell echo {ubuntu16.04,centos7}-{cuda9-tf1.14-pt1.3,cuda10-tf1.15-pt1.3,cuda10-tf2.1-pt1.3,cuda10-tf2.4-pt1.7})
+ML_AMD64 := $(shell echo {ubuntu20.04,centos7}-cuda11-tf2.6-pt1.10})
 ML_PPC64LE := $(shell echo ppc64le-{ubuntu16.04,centos7}-{cuda10-tf1.15-pt1.2,cuda10-tf2.1-pt1.3})
 
 ##### x86 images ####################
-%-cuda9-tf1.14-pt1.3: containers/tf-conda % | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.14" --build-arg CV="10" --build-arg PT="1.3" ./containers &> $@.log
-	$(PUSHC)
-	touch $@
-%-cuda10-tf1.15-pt1.3: containers/tf-conda % | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
-	$(PUSHC)
-	touch $@
-%-cuda10-tf2.1-pt1.3: containers/tf-conda % | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
-	$(PUSHC)
-	touch $@
-%-cuda10-tf2.4-pt1.7: containers/tf-conda % | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.4" --build-arg CV="10.2" --build-arg PT="1.7" ./containers &> $@.log
+%-cuda11-tf2.6-pt1.10: containers/tf-conda % | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.6" --build-arg CV="11.2" --build-arg PT="1.10" ./containers &> $@.log
 	$(PUSHC)
 	touch $@
 

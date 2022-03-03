@@ -37,11 +37,12 @@ RUN conda install -q --yes --no-update-deps \
 RUN conda install -q --yes --no-update-deps \
         ipykernel \
         jupyter \
+        jupyterlab \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 # Install pytorch
-RUN conda install -q --yes --no-update-deps -c pytorch \
-	pytorch=${PV} \
+RUN conda install -q --yes --no-update-deps \
+	pytorch-gpu=${PV} \
 	torchvision \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
