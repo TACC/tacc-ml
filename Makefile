@@ -68,9 +68,14 @@ serve/Miniconda3-py37_4.11.0-Linux-ppc64le.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-py37_4.11.0-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
 serve/Miniconda3-py39_4.11.0-Linux-ppc64le.sh: | serve curl
 	curl -sL https://repo.anaconda.com/miniconda/Miniconda3-py39_4.11.0-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
+serve/Miniforge3-4.11.0-4-Linux-x86_64.sh: | serve curl
+	curl -sL https://github.com/conda-forge/miniforge/releases/download/4.11.0-4/Miniforge3-4.11.0-4-Linux-x86_64.sh > $@.tmp && mv $@.tmp $@
+serve/Miniforge3-4.11.0-4-Linux-ppc64le.sh: | serve curl
+	curl -sL https://github.com/conda-forge/miniforge/releases/download/4.11.0-4/Miniforge3-4.11.0-4-Linux-ppc64le.sh > $@.tmp && mv $@.tmp $@
 
 .PHONY: downloads
-downloads: $(shell echo serve/Miniconda3-py39_4.11.0-Linux-{x86_64,ppc64le}.sh)
+#downloads: $(shell echo serve/Miniconda3-py39_4.11.0-Linux-{x86_64,ppc64le}.sh)
+downloads: $(shell echo serve/Miniforge3-4.11.0-4-Linux-{x86_64,ppc64le}.sh)
 ####################################
 # File server
 ####################################
@@ -117,10 +122,10 @@ BASE_PPC64LE := $(shell echo ppc64le-{centos7,ubuntu20.04})
 
 containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 	cp $< $@
-%: containers/% serve/Miniconda3-py39_4.11.0-Linux-x86_64.sh server_pid | docker
+%: containers/% serve/Miniforge3-4.11.0-4-Linux-x86_64.sh server_pid | docker
 	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg MCF="$(notdir $(word 2,$^))" --platform linux/amd64 ./containers &> $@.log
 	touch $@
-ppc64le-%: containers/% serve/Miniconda3-py39_4.11.0-Linux-ppc64le.sh server_pid ppc64le | docker
+ppc64le-%: containers/% serve/Miniforge3-4.11.0-4-Linux-ppc64le.sh server_pid ppc64le | docker
 	$(BUILD) --build-arg FLAGS="$(PPC)" --build-arg MCF="$(notdir $(word 2,$^))" --platform linux/ppc64le ./containers &> $@.log
 	touch $@
 base-images: $(BASE_AMD64) $(BASE_PPC64LE)

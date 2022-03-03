@@ -44,7 +44,7 @@ RUN yum -y install curl which epel-release ca-certificates \
 
 ENV CONDA_DIR=/opt/conda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
-# Download and install miniconda
+# Download and install miniforge
 RUN mkdir $CONDA_DIR && chmod -R a+rX $CONDA_DIR \
     && curl -s http://${HOST}:3333/${MCF} > $MCF \
     && bash ${MCF} -f -b -p $CONDA_DIR && rm $MCF \
