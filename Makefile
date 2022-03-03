@@ -153,7 +153,7 @@ clean-base-ppc64le: | docker
 # ML Images
 ####################################
 ML_AMD64 := $(shell echo {ubuntu20.04,centos7}-cuda11-tf2.6-pt1.10)
-ML_PPC64LE := $(shell echo ppc64le-{ubuntu16.04,centos7}-{cuda10-tf1.15-pt1.2,cuda10-tf2.1-pt1.3})
+ML_PPC64LE := $(shell echo ppc64le-{ubuntu20.04,centos7}-cuda11-tf2.7-pt1.10)
 
 ##### x86 images ####################
 %-cuda11-tf2.6-pt1.10: containers/tf-conda % | docker
@@ -162,13 +162,9 @@ ML_PPC64LE := $(shell echo ppc64le-{ubuntu16.04,centos7}-{cuda10-tf1.15-pt1.2,cu
 	touch $@
 
 ##### ppc images ####################
-ppc64le-%-cuda10-tf1.15-pt1.2: containers/tf-ppc64le ppc64le-% ppc64le | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="1.15" --build-arg CV="10.2" --build-arg PT="1.2" ./containers &> $@.log
+ppc64le-%-cuda11-tf2.7-pt1.10: containers/tf-ppc64le ppc64le-% ppc64le | docker
+	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.7" --build-arg CV="11.2" --build-arg PT="1.10" ./containers &> $@.log
 	$(PUSHC)
-	touch $@
-ppc64le-%-cuda10-tf2.1-pt1.3: containers/tf-ppc64le ppc64le-% ppc64le | docker
-	$(BUILD) --build-arg FROM_TAG="$(word 2,$^)" --build-arg TF="2.1" --build-arg CV="10.2" --build-arg PT="1.3" ./containers &> $@.log
-	$(PUSH)
 	touch $@
 
 ml-images: $(ML_AMD64) $(ML_PPC64LE)

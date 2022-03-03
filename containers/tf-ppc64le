@@ -5,7 +5,6 @@ FROM tacc/tacc-ml:$FROM_TAG
 # BUILD Args
 ########################################
 
-ARG HOST
 ARG VER
 ARG REL
 ARG TF
@@ -22,11 +21,9 @@ RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 # Install TF dependencies
 ########################################
 
-# Prepend PowerAI channel
-RUN conda config --system --prepend channels https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/ \
+# Prepend OSUOSL Open-CE channel
+RUN conda config --system --prepend channels https://ftp.osuosl.org/pub/open-ce/1.5.1/ \
     && conda config --system --set channel_priority strict
-# Accept IBM license
-ENV IBM_POWERAI_LICENSE_ACCEPT=yes
 
 RUN conda install -q --yes \
         pillow \
@@ -36,15 +33,16 @@ RUN conda install -q --yes \
         scikit-learn \
         pandas \
         cython \
-	"pytorch=${PV}" \
-	torchvision \
-	"tensorflow-gpu=${TF}" \
-	"cudatoolkit<${CV}" \
+        "pytorch=${PV}" \
+        torchvision \
+        "tensorflow-gpu=${TF}" \
+        "cudatoolkit=${CV}" \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 RUN conda install -q --yes --no-update-deps \
         ipykernel \
         jupyter \
+        jupyterlab \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 # Create ipython kernel
