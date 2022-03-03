@@ -152,7 +152,7 @@ clean-base-ppc64le: | docker
 ####################################
 # ML Images
 ####################################
-ML_AMD64 := $(shell echo {ubuntu20.04,centos7}-cuda11-tf2.6-pt1.10})
+ML_AMD64 := $(shell echo {ubuntu20.04,centos7}-cuda11-tf2.6-pt1.10)
 ML_PPC64LE := $(shell echo ppc64le-{ubuntu16.04,centos7}-{cuda10-tf1.15-pt1.2,cuda10-tf2.1-pt1.3})
 
 ##### x86 images ####################
