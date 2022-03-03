@@ -5,7 +5,11 @@
 serve
 server_pid
 base-images
+base-images-amd64
+base-images-ppc64le
 ml-images
+ml-images-amd64
+ml-images-ppc64le
 centos7
 ppc64le
 ppc64le-centos7

@@ -48,7 +48,7 @@ stop_qemu:
 		docker run --rm --privileged multiarch/qemu-user-static --reset &> /dev/null \
 		&& rm qemu-user-static; \
 	fi
-	[ -e ppc64le ] && rm ppc64le
+	if [ -e ppc64le ]; then rm ppc64le; fi
 ppc64le: | docker
 	if docker run --rm -it --platform linux/ppc64le centos:7 uname &> /dev/null; then \
 		touch $@; \
@@ -137,11 +137,11 @@ base-images-ppc64le: $(BASE_PPC64LE)
 clean-base: | clean-base-amd64 clean-base-ppc64le
 clean-base-amd64: | docker
 	for img in $(BASE_AMD64); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
-	[ -e base-images-amd64 ] && rm base-images-amd64
+	if [ -e base-images-amd64 ]; then rm base-images-amd64; fi
 	$(MAKE) halt
 clean-base-ppc64le: | docker
 	for img in $(BASE_PPC64LE); do docker rmi $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
-	[ -e base-images-ppc64le ] && rm base-images-ppc64le
+	if [ -e base-images-ppc64le ]; then rm base-images-ppc64le; fi
 	$(MAKE) halt
 
 ####################################
@@ -192,11 +192,11 @@ ml-images-ppc64le: $(ML_PPC64LE)
 clean-ml: | clean-ml-amd64 clean-ml-ppc64le
 clean-ml-amd64: | docker
 	for img in $(ML_AMD64); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
-	[ -e ml-images-amd64 ] && rm ml-images-amd64
+	if [ -e ml-images-amd64 ]; then rm ml-images-amd64; fi
 	$(MAKE) halt
 clean-ml-ppc64le: | docker
 	for img in $(ML_PPC64LE); do docker rmi -f $(ORG)/tacc-ml:$$img; rm -f $$img $$img.log; done
-	[ -e ml-images-ppc64le ] && rm ml-images-ppc64le
+	if [ -e ml-images-ppc64le ]; then rm ml-images-ppc64le; fi
 	$(MAKE) halt
 
 ####################################
