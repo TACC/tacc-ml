@@ -34,15 +34,21 @@ RUN conda install -q --yes --no-update-deps \
 	"cudatoolkit<${CV}" \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
-RUN conda install -q --yes --no-update-deps \
+RUN conda install -q --yes \
         ipykernel \
         jupyter \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 # Install pytorch
-RUN conda install -q --yes --no-update-deps \
+RUN conda install -q --yes -c pytorch \
 	pytorch=${PV} \
 	torchvision \
+    torchaudio \
+    && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+# Install Transformers library
+RUN conda install -q --yes --no-update-deps -c conda-forge \
+    transformers \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 # Create ipython kernel
