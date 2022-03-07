@@ -41,7 +41,7 @@ RUN conda install -q --yes --no-update-deps \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 # Install pytorch
-RUN conda install -q --yes --no-update-deps \
+RUN conda install -q --yes --no-update-deps -c conda-forge -c pytorch \
 	pytorch-gpu=${PV} \
 	torchvision \
     torchtext \
