@@ -25,8 +25,9 @@ RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 RUN conda config --system --prepend channels https://ftp.osuosl.org/pub/open-ce/1.5.1/ \
     && conda config --system --set channel_priority strict
 
-RUN conda install -q --yes \
+RUN conda install -q --yes --no-update-deps \
         pillow \
+        h5py \
         matplotlib \
         mock \
         scipy \
@@ -34,9 +35,12 @@ RUN conda install -q --yes \
         pandas \
         cython \
         "pytorch=${PV}" \
+        pytorch-lightning \
         torchvision \
-        "tensorflow-gpu=${TF}" \
+        torchtext \
+        "tensorflow=${TF}" \
         "cudatoolkit=${CV}" \
+        transformers \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 RUN conda install -q --yes --no-update-deps \

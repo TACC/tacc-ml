@@ -44,6 +44,9 @@ RUN conda install -q --yes --no-update-deps \
 RUN conda install -q --yes --no-update-deps \
 	pytorch-gpu=${PV} \
 	torchvision \
+    torchtext \
+    pytorch-lightning \
+    transformers \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 # Create ipython kernel
