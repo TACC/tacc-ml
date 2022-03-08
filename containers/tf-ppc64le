@@ -34,12 +34,12 @@ RUN conda install -q --yes --no-update-deps \
         scikit-learn \
         pandas \
         cython \
-        "pytorch=${PV}" \
+        pytorch=${PV} \
         pytorch-lightning \
         torchvision \
         torchtext \
-        "tensorflow=${TF}" \
-        "cudatoolkit=${CV}" \
+        tensorflow=${TF} \
+        cudatoolkit=${CV} \
         transformers \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
