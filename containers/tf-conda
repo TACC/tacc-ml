@@ -32,10 +32,6 @@ RUN conda install -q --yes --no-update-deps \
         cython \
         tensorflow-gpu=${TF} \
         cudatoolkit=${CV} \
-        pytorch-gpu=${PV} \
-        torchvision \
-        pytorch-lightning \
-        transformers \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
 
 ########################################
