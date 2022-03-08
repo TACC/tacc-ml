@@ -18,7 +18,7 @@ ARG CV
 RUN RF=/etc/${REL}-release; echo ${VER} > $RF && chmod a+r $RF
 
 ########################################
-# Install TF dependencies
+# Install TF, PT, and CUDA
 ########################################
 
 # Prepend OSUOSL Open-CE channel
@@ -42,6 +42,10 @@ RUN conda install -q --yes --no-update-deps \
         cudatoolkit=${CV} \
         transformers \
     && docker-clean && rm -rf ${CONDA_DIR}/pkgs/*
+
+########################################
+# Install jupyter
+########################################
 
 RUN conda install -q --yes --no-update-deps \
         ipykernel \
