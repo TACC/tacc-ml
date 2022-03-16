@@ -121,6 +121,7 @@ BASE_PPC64LE := $(shell echo ppc64le-{centos7,ubuntu20.04})
 
 containers/extras/qemu-ppc64le-static: /usr/bin/qemu-ppc64le-static
 	cp $< $@
+
 %: containers/% serve/Miniforge3-4.11.0-4-Linux-x86_64.sh server_pid | docker
 	$(BUILD) --build-arg FLAGS="$(AMD)" --build-arg MCF="$(notdir $(word 2,$^))" --platform linux/amd64 ./containers &> $@.log
 	touch $@
