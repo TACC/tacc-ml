@@ -1,4 +1,4 @@
-FROM centos:7
+FROM ubuntu:20.04
 
 ########################################
 # BUILD Args
@@ -15,6 +15,7 @@ ARG REL
 ########################################
 
 SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
 ENV CFLAGS=${FLAGS} \
 	CXXFLAGS=${FLAGS} \
 	XDG_RUNTIME_DIR=""
@@ -31,11 +32,8 @@ RUN chmod a+rx /usr/bin/docker-clean && docker-clean
 # Necessary packages
 ########################################
 
-RUN yum -y groupinstall "Development tools" \
-	&& docker-clean
-
-RUN yum -y install curl which epel-release ca-certificates \
-	&& yum install -y lbzip2 \
+RUN apt-get update \
+	&& apt-get install -yq --no-install-recommends curl build-essential lbzip2 ca-certificates \
 	&& docker-clean
 
 ########################################
